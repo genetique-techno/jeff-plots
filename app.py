@@ -26,7 +26,7 @@ def remove_units(value):
   else:
     return value
 
-def convert_below_threshold(value):
+def convert_non_detect_to_zero(value):
   """Converts value below measurement threshold to zero. Otherwise returns the value untouched."""
   if type(value) == str and value.startswith("<"):
     return 0
@@ -83,7 +83,7 @@ analyte_values = get_raw_analyte_values(row)
 print(analyte_values)
 analyte_values = list(map(remove_units, analyte_values))
 print(analyte_values)
-analyte_values = list(map(convert_below_threshold, analyte_values))
+analyte_values = list(map(convert_non_detect_to_zero, analyte_values))
 print(analyte_values)
 analyte_values = list(map(convert_to_float, analyte_values))
 print(analyte_values)
