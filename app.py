@@ -40,10 +40,6 @@ def convert_to_float(value):
   else:
     return value
 
-# def map_over_values(values, f):
-#   """Takes a cell and removes the units from it via splitting. Converts result to float."""
-#   return [ f(c) for c in values ]
-
 def get_values_from_cells(cells):
   """Takes a list of cells and returns the values of the cells."""
   return [ c.value for c in cells ]
