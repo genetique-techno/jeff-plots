@@ -14,14 +14,16 @@ from openpyxl import load_workbook
 # min_row: 1-indexed row where measurement data starts.
 # max_row: 1-indexed row where measurement data ends. Should be used for testing only, may cause side effects.
 # min_column: 1-indexed column where measurement data starts.
+# exclude_sheets: Array of sheet names to exclude from processing.
 
 file = "CL-1 Sample Results Summary.xlsm"
 sample_date_row = 3
 date_validity_check_regex = "^Q[1-4] [0-9]{4}$"
 analyte_column = 1
 min_row = 4
-max_row = 5
+max_row = 4
 min_column = 4
+exclude_sheets = ["CL-1", "CL-2", "Sheet3", "Sheet4"]
 
 #
 # --- Plot Styling Params ---
@@ -29,10 +31,14 @@ min_column = 4
 # x_label: Label to apply to the x-axis.
 # y_label: Label to apply to the y-axis.
 # series_label: Label to apply to the species legend
+# width: Width (px) of output images.
+# height: Height (px) of output images.
 
 x_label = "Sample Date"
 y_label = "Value"
 series_label = "Site"
+width = 700
+height = 500
 
 #
 # --- Helper Methods ---
@@ -138,9 +144,9 @@ def process_workbook(book, sheetnames, min_row, min_column, max_row, analyte_col
         book_result[analyte] = analyte_data
   return book_result
 
-def make_plot(analyte, data, x_label, y_label, series_label):
+def make_plot(analyte, data, x_label, y_label, series_label, width, height):
   """Takes data, generates a scatter plot and saves the image to a file."""
-  plot = px.scatter(data_frame = data, x = x_label, y = y_label, color = series_label, title = analyte)
+  plot = px.scatter(data_frame = data, x = x_label, y = y_label, color = series_label, title = analyte, width = width, height = height)
   bytes = plot.to_image(format = "png")
   filename = analyte + ".png"
   outfile = open("./output/" + filename, "wb")
@@ -155,10 +161,12 @@ def make_plot(analyte, data, x_label, y_label, series_label):
 print("--- Starting ---")
 # Acquire the workbook.
 wb = load_workbook("./data/" + file)
-# Assemble a RegExp object for finding date values.
+# Find only valid sheet names from the workbook.
+sheetnames = [ item for item in wb.sheetnames if item not in exclude_sheets ]
+# Compile a RegExp object for finding date values.
 date_re = re.compile(date_validity_check_regex)
 # Process the workbook into a dictionary containing all analyte data.
-results = process_workbook(wb, ["CL-1 Data", "CL-2 Data", "CL-3 Data"], min_row, min_column, max_row, analyte_column, x_label, y_label, series_label)
+results = process_workbook(wb, sheetnames, min_row, min_column, max_row, analyte_column, x_label, y_label, series_label)
 # Make plots for every analyte.
-[ make_plot(analyte, data, x_label, y_label, series_label) for analyte, data in results.items() ]
+[ make_plot(analyte, data, x_label, y_label, series_label, width, height) for analyte, data in results.items() ]
 print("--- Finished ---")
