@@ -4,6 +4,8 @@ import re
 import plotly.express as px
 from openpyxl import load_workbook
 
+print("--- Start Processing ---")
+
 # --- Workbook stuff
 wb = load_workbook("./data/CL-1 Sample Results Summary.xlsm")
 # need a way to establish iteration across sheets
@@ -90,13 +92,12 @@ analyte_values = get_values_from_cells(analyte_cells)
 analyte_values = list(map(remove_units, analyte_values))
 analyte_values = list(map(convert_non_detect_to_zero, analyte_values))
 analyte_values = list(map(convert_to_float, analyte_values))
+analyte_labels = ["CL-1" for i in range(len(analyte_values))]
 
-# data_frame = [("Sample Date", "CL-1")] + list(zip(date_values, analyte_values))
-# print(data_frame)
+data_frame = { "Sample Date": date_values, "Concentration": analyte_values, "Location": analyte_labels }
 
-plot = px.scatter(x = date_values, y = analyte_values, title = analyte_name)
+plot = px.scatter(data_frame, x = "Sample Date", y = "Concentration", color = "Location", title = analyte_name)
 bytes = plot.to_image(format = "png")
-# print(bytes)
-outfile = open("./output.png", "wb")
+outfile = open("./output/output.png", "wb")
 outfile.write(bytes)
 outfile.close()
