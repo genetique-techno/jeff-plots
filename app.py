@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import re
+import plotly.express as px
 from openpyxl import load_workbook
 
 # --- Workbook stuff
@@ -66,9 +67,9 @@ def get_analyte_name(row):
   """Returns the Analyte Name for the row using analyte_name_column."""
   return row[analyte_name_column - 1].value
 
-def get_raw_analyte_values(row):
+def get_analyte_cells(row, min_column, max_column):
   """Returns the data values for the row, using min_column and max_column to narrow the dataset."""
-  return [ c.value for c in row if c.column >= min_column and c.column <= max_column ]
+  return [ c for c in row if c.column >= min_column and c.column <= max_column ]
 
 
 
@@ -76,14 +77,23 @@ def get_raw_analyte_values(row):
 for a_row in ws.iter_rows(min_row, max_row):
   row = a_row
 
+# get date_cells, which represent the full x series for the data
 date_cells = get_date_cells(ws)
 max_column = get_max_column(date_cells)
+analyte_cells = get_analyte_cells(row, min_column, max_column)
 analyte_name = get_analyte_name(row)
-analyte_values = get_raw_analyte_values(row)
-print(analyte_values)
+
+# extract values from date_cells
+date_values = get_values_from_cells(date_cells)
+# get and massage analyte values
+analyte_values = get_values_from_cells(analyte_cells)
 analyte_values = list(map(remove_units, analyte_values))
-print(analyte_values)
 analyte_values = list(map(convert_non_detect_to_zero, analyte_values))
-print(analyte_values)
 analyte_values = list(map(convert_to_float, analyte_values))
-print(analyte_values)
+
+# data_frame = [("Sample Date", "CL-1")] + list(zip(date_values, analyte_values))
+# print(data_frame)
+
+plot = px.scatter(x = date_values, y = analyte_values, title = analyte_name)
+bytes = plot.to_image(format = "png")
+outfile = open("./output.png", "wb")
