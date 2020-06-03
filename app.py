@@ -3,6 +3,7 @@
 import re
 import plotly.express as px
 from openpyxl import load_workbook
+from os import mkdir, scandir
 
 #
 # --- User Params ---
@@ -159,6 +160,11 @@ def make_plot(analyte, data, x_label, y_label, series_label, width, height):
 # --- Main Program Flow
 #
 print("--- Starting ---")
+# Ensure the output directory exists.
+try:
+  scandir("output")
+except:
+  mkdir("output")
 # Acquire the workbook.
 wb = load_workbook("./data/" + file)
 # Find only valid sheet names from the workbook.
