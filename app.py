@@ -22,10 +22,19 @@ y_name = "CL1"
 date_re = re.compile("^Q[1-4] [0-9]{4}$")
 
 
+# --- Helper Methods ---
+
 def remove_units(value):
   """Removes the units from a value that is a string. Otherwise returns the value untouched."""
   if type(value) == str:
     return value.split()[0]
+  else:
+    return value
+
+def convert_no_sample_to_none(value):
+  """Converts a NS value to a None."""
+  if value == "NS":
+    return None
   else:
     return value
 
@@ -52,6 +61,7 @@ def get_max_column(cells):
   return cells[-1].column
 
 
+# --- Extraction Methods ---
 
 def get_date_cells(ws):
   """Takes the worksheet, uses date_row & min_column to return just the date values."""
@@ -74,30 +84,66 @@ def get_analyte_cells(row, min_column, max_column):
   return [ c for c in row if c.column >= min_column and c.column <= max_column ]
 
 
+# --- Combinatorial Methods ---
+
+def process_sheet(sheet, min_row, min_column, max_row):
+  """Given a Sheet instance, returns a dict of all analytes with data_frame dicts for each."""
+  date_cells = get_date_cells(sheet)
+  max_column = get_max_column(date_cells)
+  date_values = get_values_from_cells(date_cells)
+  sheet_result = {}
+  for row in ws.iter_rows(min_row, max_row):
+    analyte_values = get_values_from_cells(get_analyte_cells(row, min_column, max_column))
+    analyte_values = list(map(remove_units, analyte_values))
+    analyte_values = list(map(convert_no_sample_to_none, analyte_values))
+    analyte_values = list(map(convert_non_detect_to_zero, analyte_values))
+    analyte_values = list(map(convert_to_float, analyte_values))
+    site_labels = [sheet.title for i in range(len(analyte_values))]
+    analyte_name = get_analyte_name(row)
+    # error check needed: len(date_values) == len(analyte_values) == len(site_labels) or bad things happen
+    sheet_result.update({ analyte_name: { "Sample Date": date_values, "Value": analyte_values, "Site": site_labels } })
+  return sheet_result
+
+def process_workbook(book, sheetnames, min_row, min_column, max_row):
+  """Takes a workbook and a list of sheet names. Returns a data dict collected from all sheets."""
+  book_result = {}
+  for sheetname in sheetnames:
+    sheet = book[sheetname]
+    sheet_result = process_sheet(sheet, min_row, min_column, max_row)
+    book_result.update(sheet_result)
+# -------------
+# TODO: NEED TO COMBINE THE DICTS FOR EACH ANALYTE SO DATAFRAMES CAN BE CREATED
+  return None
+
+
+
+
+res = process_workbook(wb, ["CL-1 Data"], min_row, min_column, max_row = 4)
+
 
 # for development, just get a single row of interest
-for a_row in ws.iter_rows(min_row, max_row):
-  row = a_row
+# for a_row in ws.iter_rows(min_row, max_row):
+#   row = a_row
 
-# get date_cells, which represent the full x series for the data
-date_cells = get_date_cells(ws)
-max_column = get_max_column(date_cells)
-analyte_cells = get_analyte_cells(row, min_column, max_column)
-analyte_name = get_analyte_name(row)
+# # get date_cells, which represent the full x series for the data
+# date_cells = get_date_cells(ws)
+# max_column = get_max_column(date_cells)
+# analyte_cells = get_analyte_cells(row, min_column, max_column)
+# analyte_name = get_analyte_name(row)
 
-# extract values from date_cells
-date_values = get_values_from_cells(date_cells)
-# get and massage analyte values
-analyte_values = get_values_from_cells(analyte_cells)
-analyte_values = list(map(remove_units, analyte_values))
-analyte_values = list(map(convert_non_detect_to_zero, analyte_values))
-analyte_values = list(map(convert_to_float, analyte_values))
-analyte_labels = ["CL-1" for i in range(len(analyte_values))]
+# # extract values from date_cells
+# date_values = get_values_from_cells(date_cells)
+# # get and massage analyte values
+# analyte_values = get_values_from_cells(analyte_cells)
+# analyte_values = list(map(remove_units, analyte_values))
+# analyte_values = list(map(convert_non_detect_to_zero, analyte_values))
+# analyte_values = list(map(convert_to_float, analyte_values))
+# analyte_labels = ["CL-1" for i in range(len(analyte_values))]
 
-data_frame = { "Sample Date": date_values, "Concentration": analyte_values, "Location": analyte_labels }
+# data_frame = { "Sample Date": date_values, "Concentration": analyte_values, "Location": analyte_labels }
 
-plot = px.scatter(data_frame, x = "Sample Date", y = "Concentration", color = "Location", title = analyte_name)
-bytes = plot.to_image(format = "png")
-outfile = open("./output/output.png", "wb")
-outfile.write(bytes)
-outfile.close()
+# plot = px.scatter(data_frame, x = "Sample Date", y = "Concentration", color = "Location", title = analyte_name)
+# bytes = plot.to_image(format = "png")
+# outfile = open("./output/output.png", "wb")
+# outfile.write(bytes)
+# outfile.close()
