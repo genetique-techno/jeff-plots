@@ -15,7 +15,9 @@ WORKDIR /usr/local/app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+RUN mv /opt/conda/bin/orca /opt/conda/bin/orca-exec
+RUN echo '#!/bin/bash\nxvfb-run --server-args "-screen 0 1920x1080x24" -a /opt/conda/bin/orca-exec "$@" --disable-gpu' > /opt/conda/bin/orca
+RUN chmod +x /opt/conda/bin/orca
 
 CMD ["python", "app.py"]
 

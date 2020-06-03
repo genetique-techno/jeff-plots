@@ -96,4 +96,7 @@ analyte_values = list(map(convert_to_float, analyte_values))
 
 plot = px.scatter(x = date_values, y = analyte_values, title = analyte_name)
 bytes = plot.to_image(format = "png")
+# print(bytes)
 outfile = open("./output.png", "wb")
+outfile.write(bytes)
+outfile.close()
