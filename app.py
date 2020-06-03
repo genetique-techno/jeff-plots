@@ -4,6 +4,9 @@ import re
 import plotly.express as px
 from openpyxl import load_workbook
 
+# --- User Params ---
+# !!
+
 print("--- Start Processing ---")
 
 # --- Workbook stuff
@@ -60,6 +63,14 @@ def get_max_column(cells):
   """Takes a list of cells and returns the column number of the last element in the list."""
   return cells[-1].column
 
+def merge_dict(dict1, dict2):
+  """Merge dictionaries and keep values of common keys in list."""
+  result = {**dict1, **dict2}
+  for key, value in result.items():
+    if key in dict1 and key in dict2:
+      result[key] = dict1[key] + value
+  return result
+
 
 # --- Extraction Methods ---
 
@@ -105,40 +116,23 @@ def process_sheet(sheet, min_row, min_column, max_row):
   return sheet_result
 
 def process_workbook(book, sheetnames, min_row, min_column, max_row):
-  """Takes a workbook and a list of sheet names. Returns a data dict collected from all sheets."""
+  """Takes a workbook and a list of sheet names. Returns a data dict with a key for each analyte collected from all relevant sheets."""
   book_result = {}
   for sheetname in sheetnames:
     sheet = book[sheetname]
     sheet_result = process_sheet(sheet, min_row, min_column, max_row)
-    book_result.update(sheet_result)
-# -------------
-# TODO: NEED TO COMBINE THE DICTS FOR EACH ANALYTE SO DATAFRAMES CAN BE CREATED
-  return None
+    for analyte, analyte_data in sheet_result.items():
+      if analyte in book_result:
+        book_result[analyte] = merge_dict(book_result[analyte], analyte_data)
+      else:
+        book_result[analyte] = analyte_data
+  return book_result
 
 
 
+res = process_workbook(wb, ["CL-1 Data", "CL-2 Data"], min_row, min_column, max_row = 4)
+print(res)
 
-res = process_workbook(wb, ["CL-1 Data"], min_row, min_column, max_row = 4)
-
-
-# for development, just get a single row of interest
-# for a_row in ws.iter_rows(min_row, max_row):
-#   row = a_row
-
-# # get date_cells, which represent the full x series for the data
-# date_cells = get_date_cells(ws)
-# max_column = get_max_column(date_cells)
-# analyte_cells = get_analyte_cells(row, min_column, max_column)
-# analyte_name = get_analyte_name(row)
-
-# # extract values from date_cells
-# date_values = get_values_from_cells(date_cells)
-# # get and massage analyte values
-# analyte_values = get_values_from_cells(analyte_cells)
-# analyte_values = list(map(remove_units, analyte_values))
-# analyte_values = list(map(convert_non_detect_to_zero, analyte_values))
-# analyte_values = list(map(convert_to_float, analyte_values))
-# analyte_labels = ["CL-1" for i in range(len(analyte_values))]
 
 # data_frame = { "Sample Date": date_values, "Concentration": analyte_values, "Location": analyte_labels }
 
