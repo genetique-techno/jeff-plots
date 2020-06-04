@@ -5,6 +5,7 @@ import plotly.express as px
 from openpyxl import load_workbook
 from os import mkdir, scandir
 from pathlib import Path
+from datetime import date
 
 #
 # --- User Params ---
@@ -19,13 +20,13 @@ from pathlib import Path
 # exclude_sheets: Array of sheet names to exclude from processing.
 
 file = "CL-1 Sample Results Summary.xlsm"
-sample_date_row = 3
-date_validity_check_regex = "^Q[1-4] [0-9]{4}$"
+sample_date_row = 2
+date_validity_check_regex = "^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$"
 analyte_column = 1
 min_row = 4
 max_row = 10
-min_column = 4
-exclude_sheets = ["CL-1", "CL-2", "Sheet3", "Sheet4"]
+min_column = 8
+exclude_sheets = ["CL-1", "CL-2", "Sheet3", "Sheet4", "CL-2 Data", "CL-3 Data", "CL-4 Data", "CL-5 Data", "CL-6 Data"]
 
 #
 # --- Plot Styling Params ---
@@ -89,6 +90,13 @@ def merge_dict(dict1, dict2):
       result[key] = dict1[key] + value
   return result
 
+def convert_mmddyyyy_to_date(dateStr):
+  """Takes a mm/dd/yyyy string and converts it to a datetime.date python object."""
+  arr = dateStr.split("/")
+  arr = [ int(x) for x in arr ]
+  month, day, year = arr
+  return date(year, month, day)
+
 #
 # --- Data Extraction Methods ---
 #
@@ -120,6 +128,7 @@ def process_sheet(sheet):
   date_cells = get_date_cells(sheet, sample_date_row)
   max_column = get_max_column(date_cells)
   date_values = get_values_from_cells(date_cells)
+  date_values = [ convert_mmddyyyy_to_date(dateStr) for dateStr in date_values ]
   sheet_result = {}
   for row in sheet.iter_rows(min_row, max_row):
     analyte_values = get_values_from_cells(get_analyte_cells(row, min_column, max_column))
