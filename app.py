@@ -22,7 +22,7 @@ sample_date_row = 3
 date_validity_check_regex = "^Q[1-4] [0-9]{4}$"
 analyte_column = 1
 min_row = 4
-max_row = 4
+max_row = 10
 min_column = 4
 exclude_sheets = ["CL-1", "CL-2", "Sheet3", "Sheet4"]
 
@@ -37,7 +37,7 @@ exclude_sheets = ["CL-1", "CL-2", "Sheet3", "Sheet4"]
 
 x_label = "Sample Date"
 y_label = "Value"
-series_label = "Site"
+series_label = "Wells"
 width = 700
 height = 500
 
