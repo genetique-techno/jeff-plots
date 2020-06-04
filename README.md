@@ -7,6 +7,5 @@
 
 1. timeseries? is it correct? NO! says Jeff
 2. trendline
-3. windows/linux
 4. units
 5. Formatting/Styling (best way to apply ?)
