@@ -115,7 +115,7 @@ def get_analyte_cells(row, min_column, max_column):
 #
 # --- Combinatorial Methods ---
 #
-def process_sheet(sheet, min_row, min_column, max_row, analyte_column):
+def process_sheet(sheet):
   """Given a Sheet instance, returns a dict of all analytes with data_frame dicts for each."""
   date_cells = get_date_cells(sheet, sample_date_row)
   max_column = get_max_column(date_cells)
@@ -133,12 +133,12 @@ def process_sheet(sheet, min_row, min_column, max_row, analyte_column):
     sheet_result.update({ analyte_name: { x_label: date_values, y_label: analyte_values, series_label: site_labels } })
   return sheet_result
 
-def process_workbook(book, sheetnames, min_row, min_column, max_row, analyte_column, x_label, y_label, series_label):
+def process_workbook(book, sheetnames):
   """Takes a workbook and a list of sheet names. Returns a data dict with a key for each analyte collected from all relevant sheets."""
   book_result = {}
   for sheetname in sheetnames:
     sheet = book[sheetname]
-    sheet_result = process_sheet(sheet, min_row, min_column, max_row, analyte_column)
+    sheet_result = process_sheet(sheet)
     for analyte, analyte_data in sheet_result.items():
       if analyte in book_result:
         book_result[analyte] = merge_dict(book_result[analyte], analyte_data)
@@ -146,7 +146,7 @@ def process_workbook(book, sheetnames, min_row, min_column, max_row, analyte_col
         book_result[analyte] = analyte_data
   return book_result
 
-def make_plot(analyte, data, x_label, y_label, series_label, width, height):
+def make_plot(analyte, data):
   """Takes data, generates a scatter plot and saves the image to a file."""
   plot = px.scatter(data_frame = data, x = x_label, y = y_label, color = series_label, title = analyte, width = width, height = height)
   bytes = plot.to_image(format = "png")
@@ -173,7 +173,7 @@ sheetnames = [ item for item in wb.sheetnames if item not in exclude_sheets ]
 # Compile a RegExp object for finding date values.
 date_re = re.compile(date_validity_check_regex)
 # Process the workbook into a dictionary containing all analyte data.
-results = process_workbook(wb, sheetnames, min_row, min_column, max_row, analyte_column, x_label, y_label, series_label)
+results = process_workbook(wb, sheetnames)
 # Make plots for every analyte.
-[ make_plot(analyte, data, x_label, y_label, series_label, width, height) for analyte, data in results.items() ]
+[ make_plot(analyte, data) for analyte, data in results.items() ]
 print("--- Finished ---")
