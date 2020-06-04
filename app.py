@@ -14,6 +14,7 @@ from datetime import date
 # sample_date_row: 1-indexed row number that contains dates for the x-axis.
 # date_validity_check_regex: Regex rule for checking that the dates are valid. Is used to determine the end of the useful columns on a sheet.
 # analyte_column: 1-indexed column number that contains the analyte names.
+# units_column: 1-indexed column number that contains the units for each analyte.
 # min_row: 1-indexed row where measurement data starts.
 # max_row: 1-indexed row where measurement data ends. Should be used for testing only, may cause side effects.
 # min_column: 1-indexed column where measurement data starts.
@@ -23,6 +24,7 @@ file = "CL-1 Sample Results Summary.xlsm"
 sample_date_row = 2
 date_validity_check_regex = "^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$"
 analyte_column = 1
+units_column = 1
 min_row = 4
 max_row = 10
 min_column = 8
@@ -112,9 +114,9 @@ def get_date_cells(sheet, sample_date_row):
   # print(cells_idx_list == checksum_list)
   return cells
 
-def get_analyte_name(row, analyte_column):
-  """Returns the Analyte Name for the row using analyte_column."""
-  return row[analyte_column - 1].value
+def get_cell_value_from_row(row, column_num):
+  """Takes a openpyxl Row instance, and a 0-indexed column number, returns the value of that cell."""
+  return row[column_num - 1].value
 
 def get_analyte_cells(row, min_column, max_column):
   """Returns the data values for the row, using min_column and max_column to narrow the dataset."""
@@ -137,9 +139,10 @@ def process_sheet(sheet):
     analyte_values = list(map(convert_non_detect_to_zero, analyte_values))
     analyte_values = list(map(convert_to_float, analyte_values))
     site_labels = [sheet.title for i in range(len(analyte_values))]
-    analyte_name = get_analyte_name(row, analyte_column)
+    analyte_name = get_cell_value_from_row(row, analyte_column)
+    units = get_cell_value_from_row(row, units_column)
     # error check needed: len(date_values) == len(analyte_values) == len(site_labels) or bad things happen
-    sheet_result.update({ analyte_name: { x_label: date_values, y_label: analyte_values, series_label: site_labels } })
+    sheet_result.update({ analyte_name: { x_label: date_values, "y_label": units, "y_values": analyte_values, series_label: site_labels } })
   return sheet_result
 
 def process_workbook(book, sheetnames):
@@ -157,7 +160,7 @@ def process_workbook(book, sheetnames):
 
 def make_plot(analyte, data):
   """Takes data, generates a scatter plot and saves the image to a file."""
-  plot = px.scatter(data_frame = data, x = x_label, y = y_label, color = series_label, title = analyte, width = width, height = height)
+  plot = px.scatter(data_frame = data, x = x_label, y = "y_values", labels = { "y_values": data["y_label"] }, color = series_label, title = analyte, width = width, height = height)
   bytes = plot.to_image(format = "png")
   filename = analyte + ".png"
   outfile = open(Path("output/") / filename, "wb")
