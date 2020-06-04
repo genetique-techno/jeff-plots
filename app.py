@@ -4,6 +4,7 @@ import re
 import plotly.express as px
 from openpyxl import load_workbook
 from os import mkdir, scandir
+from pathlib import Path
 
 #
 # --- User Params ---
@@ -150,7 +151,7 @@ def make_plot(analyte, data, x_label, y_label, series_label, width, height):
   plot = px.scatter(data_frame = data, x = x_label, y = y_label, color = series_label, title = analyte, width = width, height = height)
   bytes = plot.to_image(format = "png")
   filename = analyte + ".png"
-  outfile = open("./output/" + filename, "wb")
+  outfile = open(Path("output/") / filename, "wb")
   outfile.write(bytes)
   outfile.close()
   print(filename)
@@ -166,7 +167,7 @@ try:
 except:
   mkdir("output")
 # Acquire the workbook.
-wb = load_workbook("./data/" + file)
+wb = load_workbook(Path("data/") / file)
 # Find only valid sheet names from the workbook.
 sheetnames = [ item for item in wb.sheetnames if item not in exclude_sheets ]
 # Compile a RegExp object for finding date values.
