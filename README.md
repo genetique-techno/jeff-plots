@@ -6,5 +6,4 @@
 # TODO
 
 2. trendline
-4. units
 5. Formatting/Styling (best way to apply ?)
