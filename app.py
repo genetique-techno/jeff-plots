@@ -5,7 +5,7 @@ import plotly.express as px
 from openpyxl import load_workbook
 from os import mkdir, scandir
 from pathlib import Path
-from datetime import date
+import datetime
 
 #
 # --- User Params ---
@@ -24,23 +24,21 @@ file = "CL-1 Sample Results Summary.xlsm"
 sample_date_row = 2
 date_validity_check_regex = "^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$"
 analyte_column = 1
-units_column = 1
+units_column = 3
 min_row = 4
-max_row = 10
-min_column = 8
-exclude_sheets = ["CL-1", "CL-2", "Sheet3", "Sheet4", "CL-2 Data", "CL-3 Data", "CL-4 Data", "CL-5 Data", "CL-6 Data"]
+max_row = 4
+min_column = 5
+exclude_sheets = ["CL-1", "CL-2", "CL-3", "CL-4", "CL-5", "Sheet3", "Sheet4", "CL-2 Data", "CL-3 Data", "CL-4 Data", "CL-5 Data"]
 
 #
 # --- Plot Styling Params ---
 #
 # x_label: Label to apply to the x-axis.
-# y_label: Label to apply to the y-axis.
 # series_label: Label to apply to the species legend
 # width: Width (px) of output images.
 # height: Height (px) of output images.
 
 x_label = "Sample Date"
-y_label = "Value"
 series_label = "Wells"
 width = 700
 height = 500
@@ -97,7 +95,15 @@ def convert_mmddyyyy_to_date(dateStr):
   arr = dateStr.split("/")
   arr = [ int(x) for x in arr ]
   month, day, year = arr
-  return date(year, month, day)
+  return datetime.datetime(year, month, day, 0, 0)
+
+def column_search_for_none(cells):
+  """Takes a list of cells and a return_prop name. Searches for the first `None` value in the cells and returns the cell[return_prop]. You can extract the length of the valid rows or columns this way."""
+  for i in range(len(cells)):
+    if cells[i].value == None:
+      last_valid_cell = cells[i-1]
+      return last_valid_cell.column
+  return 100000
 
 #
 # --- Data Extraction Methods ---
@@ -106,12 +112,9 @@ def get_date_cells(sheet, sample_date_row):
   """Takes the worksheet, uses sample_date_row & min_column to return just the date values."""
   for a_row in sheet.iter_rows(min_row = sample_date_row, max_row = sample_date_row):
     row = a_row
-  cells = [ c for c in row if c.column >= min_column and type(c.value) == str and date_re.match(c.value) ]
-  # not sure what to do for validity checking right now, but I _think_ it's important
-  # cells_idx_list = [ c.column for c in cells ]
-  # checksum_list = list(range(min(cells_idx_list), max(cells_idx_list) + 1))
-  # validity check required, can find holes in your worksheet structure or X-value logic
-  # print(cells_idx_list == checksum_list)
+  cells = [ c for c in row if c.column >= min_column ]
+  max_column = column_search_for_none(cells)
+  cells = [ c for c in cells if c.column <= max_column ]
   return cells
 
 def get_cell_value_from_row(row, column_num):
@@ -130,7 +133,9 @@ def process_sheet(sheet):
   date_cells = get_date_cells(sheet, sample_date_row)
   max_column = get_max_column(date_cells)
   date_values = get_values_from_cells(date_cells)
-  date_values = [ convert_mmddyyyy_to_date(dateStr) for dateStr in date_values ]
+  for i in range(len(date_values)):
+    if type(date_values[i]) != datetime.datetime and type(date_values[i]) != datetime.date:
+      date_values[i] = convert_mmddyyyy_to_date(date_values[i])
   sheet_result = {}
   for row in sheet.iter_rows(min_row, max_row):
     analyte_values = get_values_from_cells(get_analyte_cells(row, min_column, max_column))
@@ -160,6 +165,8 @@ def process_workbook(book, sheetnames):
 
 def make_plot(analyte, data):
   """Takes data, generates a scatter plot and saves the image to a file."""
+  data[x_label] = list(range(len(data[x_label])))
+  print(data)
   plot = px.scatter(data_frame = data, x = x_label, y = "y_values", labels = { "y_values": data["y_label"] }, color = series_label, title = analyte, width = width, height = height)
   bytes = plot.to_image(format = "png")
   filename = analyte + ".png"
