@@ -16,8 +16,9 @@ import datetime
 # analyte_column: 1-indexed column number that contains the analyte names.
 # units_column: 1-indexed column number that contains the units for each analyte.
 # min_row: 1-indexed row where measurement data starts.
-# max_row: 1-indexed row where measurement data ends. Should be used for testing only, may cause side effects.
+# max_row: 1-indexed row where measurement data ends. Should be used for testing only, may cause side effects. `None` directs the scipt to find the max.
 # min_column: 1-indexed column where measurement data starts.
+# max_column: 1-indexed column where sample dates. Should be used for testing only, may cause side effects. `None` directs the scipt to find the max.
 # exclude_sheets: Array of sheet names to exclude from processing.
 
 file = "new.xlsm"
@@ -79,12 +80,14 @@ def get_values_from_cells(cells):
   """Takes a list of cells and returns the values of the cells."""
   return [ c.value for c in cells ]
 
-def merge_dict(dict1, dict2):
-  """Merge dictionaries that contain arrays values and concat the arrays of keys found in both."""
+def merge_dict_data(dict1, dict2):
+  """Merge dictionaries that contain arrays values and concat the arrays of keys found in both. Ignores the key `y_label`."""
   result = {**dict1, **dict2}
   for key, value in result.items():
-    if key in dict1 and key in dict2:
+    if key != "y_label" and key in dict1 and key in dict2:
       result[key] = dict1[key] + value
+    else:
+      result[key] = value
   return result
 
 def convert_to_datetime(dateStr):
@@ -154,7 +157,6 @@ def process_sheet(sheet):
   """Given a Sheet instance, returns a dict of all analytes with data_frame dicts for each."""
   get_max_column(sheet)
   get_max_row(sheet)
-  print(max_row)
   date_cells = get_date_cells(sheet, sample_date_row)
   date_values = get_values_from_cells(date_cells)
   for i in range(len(date_values)):
@@ -181,7 +183,7 @@ def process_workbook(book, sheetnames):
     sheet_result = process_sheet(sheet)
     for analyte, analyte_data in sheet_result.items():
       if analyte in book_result:
-        book_result[analyte] = merge_dict(book_result[analyte], analyte_data)
+        book_result[analyte] = merge_dict_data(book_result[analyte], analyte_data)
       else:
         book_result[analyte] = analyte_data
   return book_result
