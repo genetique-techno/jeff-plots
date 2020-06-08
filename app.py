@@ -24,7 +24,7 @@ file = "CL-1 Sample Results Summary.xlsm"
 sample_date_row = 2
 date_validity_check_regex = "^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$"
 analyte_column = 1
-units_column = 3
+units_column = 4
 min_row = 4
 max_row = 4
 min_column = 5
@@ -90,12 +90,15 @@ def merge_dict(dict1, dict2):
       result[key] = dict1[key] + value
   return result
 
-def convert_mmddyyyy_to_date(dateStr):
+def convert_to_datetime(dateStr):
   """Takes a mm/dd/yyyy string and converts it to a datetime.date python object."""
-  arr = dateStr.split("/")
-  arr = [ int(x) for x in arr ]
-  month, day, year = arr
-  return datetime.datetime(year, month, day, 0, 0)
+  if type(dateStr) == datetime.datetime:
+    return dateStr.isoformat()
+  else:
+    arr = dateStr.split("/")
+    arr = [ int(x) for x in arr ]
+    month, day, year = arr
+    return datetime.datetime(year, month, day, 0, 0)
 
 def column_search_for_none(cells):
   """Takes a list of cells and a return_prop name. Searches for the first `None` value in the cells and returns the cell[return_prop]. You can extract the length of the valid rows or columns this way."""
@@ -134,8 +137,7 @@ def process_sheet(sheet):
   max_column = get_max_column(date_cells)
   date_values = get_values_from_cells(date_cells)
   for i in range(len(date_values)):
-    if type(date_values[i]) != datetime.datetime and type(date_values[i]) != datetime.date:
-      date_values[i] = convert_mmddyyyy_to_date(date_values[i])
+    date_values[i] = convert_to_datetime(date_values[i])
   sheet_result = {}
   for row in sheet.iter_rows(min_row, max_row):
     analyte_values = get_values_from_cells(get_analyte_cells(row, min_column, max_column))
@@ -166,7 +168,6 @@ def process_workbook(book, sheetnames):
 def make_plot(analyte, data):
   """Takes data, generates a scatter plot and saves the image to a file."""
   data[x_label] = list(range(len(data[x_label])))
-  print(data)
   plot = px.scatter(data_frame = data, x = x_label, y = "y_values", labels = { "y_values": data["y_label"] }, color = series_label, title = analyte, width = width, height = height)
   bytes = plot.to_image(format = "png")
   filename = analyte + ".png"
