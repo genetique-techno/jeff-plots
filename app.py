@@ -26,7 +26,7 @@ date_validity_check_regex = "^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$"
 analyte_column = 1
 units_column = 4
 min_row = 4
-max_row = 4
+max_row = None
 min_column = 5
 max_column = None
 exclude_sheets = ["CL-1", "CL-2", "CL-3", "CL-4", "CL-5", "Sheet3", "Sheet4"]
@@ -107,22 +107,25 @@ def get_max_column(sheet):
   global max_column
   global sample_date_row
   if max_column == None:
-    for cell_column in sheet.iter_cols(min_col = min_column, max_col = 10000):
+    for cell_column in sheet.iter_cols(min_col = min_column, max_col = 1000):
       if max_column == None:
         if cell_column[sample_date_row].value == None:
           max_column = cell_column[sample_date_row].column - 1
-
-  for cell_row in sheet.iter_rows(min_row = sample_date_row, max_row = sample_date_row):
-    cells = cell_row
-  if max_column == None:
-    for i in range(len(cells)):
-      print(i)
-      if cells[i].value == None:
-        last_valid_cell = cells[i-1]
-        return last_valid_cell.column
-    return 10000
   else:
     return max_column
+
+def get_max_row(sheet):
+  """Takes a sheet. Takes the min_row and searches for the first `None` value in the cells and returns the cell.row."""
+  global min_row
+  global max_row
+  global analyte_column
+  if max_row == None:
+    for cell_row in sheet.iter_rows(min_row, max_row = 1000):
+      if max_row == None:
+        if cell_row[analyte_column - 1].value == None:
+          max_row = cell_row[analyte_column - 1].row - 1
+  else:
+    return max_row
 
 #
 # --- Data Extraction Methods ---
@@ -150,6 +153,8 @@ def get_analyte_cells(row, min_column, max_column):
 def process_sheet(sheet):
   """Given a Sheet instance, returns a dict of all analytes with data_frame dicts for each."""
   get_max_column(sheet)
+  get_max_row(sheet)
+  print(max_row)
   date_cells = get_date_cells(sheet, sample_date_row)
   date_values = get_values_from_cells(date_cells)
   for i in range(len(date_values)):
