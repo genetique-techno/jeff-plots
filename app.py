@@ -2,10 +2,12 @@
 
 import re
 import plotly.express as px
+import plotly.graph_objects as go
 from openpyxl import load_workbook
 from os import mkdir, scandir
 from pathlib import Path
 import datetime
+import statsmodels.api as sm
 
 #
 # --- User Params ---
@@ -93,7 +95,7 @@ def merge_dict_data(dict1, dict2):
 def convert_to_datetime(dateStr):
   """Takes a mm/dd/yyyy string and converts it to a datetime.date python object."""
   if type(dateStr) == datetime.datetime:
-    return dateStr.isoformat()
+    return dateStr
   else:
     arr = dateStr.split("/")
     arr = [ int(x) for x in arr ]
@@ -102,7 +104,7 @@ def convert_to_datetime(dateStr):
     except:
       print("Broken dateStr object: " + dateStr)
 
-    return datetime.datetime(year, month, day, 0, 0).isoformat()
+    return datetime.datetime(year, month, day, 0, 0)
 
 def get_max_column(sheet):
   """Takes a sheet. Takes the sample date row and searches for the first `None` value in the cells and returns the cell.column."""
@@ -190,7 +192,20 @@ def process_workbook(book, sheetnames):
 
 def make_plot(analyte, data):
   """Takes data, generates a scatter plot and saves the image to a file."""
+
+  # Compute the final OLS line by serializing the datelist and removing None values
+  ols_data = [ (data[x_label][i], data["y_values"][i]) for i in range(len(data[x_label])) ]
+  ols_data = [ (x, y) for (x, y) in ols_data if y != None ]
+  filtered_dates = [ x for (x, y) in ols_data ]
+  serialized_dates = [ x.timestamp() for (x, y) in ols_data ]
+  filtered_y_values = [ y for (x, y) in ols_data ]
+  x = sm.add_constant(serialized_dates)
+  model = sm.OLS(filtered_y_values, x).fit()
+  ols_data = { "x": filtered_dates, "y": model.fittedvalues }
+
   plot = px.scatter(data_frame = data, x = x_label, y = "y_values", labels = { "y_values": data["y_label"] }, color = series_label, title = analyte, width = width, height = height)
+  # Add a trace with the computed OLS using its "clean" dataset
+  plot.add_trace(go.Scatter(x = ols_data["x"], y = ols_data["y"], mode = "lines", name = "OLS R^2="+"%.3f"%(model.rsquared)))
   bytes = plot.to_image(format = "png")
   filename = analyte + ".png"
   outfile = open(Path("output/") / filename, "wb")
