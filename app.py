@@ -20,15 +20,15 @@ import datetime
 # min_column: 1-indexed column where measurement data starts.
 # exclude_sheets: Array of sheet names to exclude from processing.
 
-file = "CL-1 Sample Results Summary.xlsm"
+file = "new.xlsm"
 sample_date_row = 2
 date_validity_check_regex = "^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$"
 analyte_column = 1
 units_column = 4
 min_row = 4
-max_row = 4
+max_row = 10
 min_column = 5
-exclude_sheets = ["CL-1", "CL-2", "CL-3", "CL-4", "CL-5", "Sheet3", "Sheet4", "CL-2 Data", "CL-3 Data", "CL-4 Data", "CL-5 Data"]
+exclude_sheets = ["CL-1", "CL-2", "CL-3", "CL-4", "CL-5", "Sheet3", "Sheet4"]
 
 #
 # --- Plot Styling Params ---
