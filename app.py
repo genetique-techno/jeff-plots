@@ -167,7 +167,6 @@ def process_workbook(book, sheetnames):
 
 def make_plot(analyte, data):
   """Takes data, generates a scatter plot and saves the image to a file."""
-  data[x_label] = list(range(len(data[x_label])))
   plot = px.scatter(data_frame = data, x = x_label, y = "y_values", labels = { "y_values": data["y_label"] }, color = series_label, title = analyte, width = width, height = height)
   bytes = plot.to_image(format = "png")
   filename = analyte + ".png"
