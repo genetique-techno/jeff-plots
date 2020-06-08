@@ -102,7 +102,7 @@ def convert_to_datetime(dateStr):
     except:
       print("Broken dateStr object: " + dateStr)
 
-    return datetime.datetime(year, month, day, 0, 0)
+    return datetime.datetime(year, month, day, 0, 0).isoformat()
 
 def column_search_for_none(cells):
   """Takes a list of cells and a return_prop name. Searches for the first `None` value in the cells and returns the cell[return_prop]. You can extract the length of the valid rows or columns this way."""
