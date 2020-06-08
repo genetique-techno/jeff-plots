@@ -97,7 +97,11 @@ def convert_to_datetime(dateStr):
   else:
     arr = dateStr.split("/")
     arr = [ int(x) for x in arr ]
-    month, day, year = arr
+    try:
+      month, day, year = arr
+    except:
+      print("Broken dateStr object: " + dateStr)
+
     return datetime.datetime(year, month, day, 0, 0)
 
 def column_search_for_none(cells):
