@@ -16,7 +16,21 @@ This project stands up a python environment that consumes an excel spreadsheet o
 
 ## Excel Spreadsheet Formatting Guidelines
 
-WIP
+Follow these 10 commandments in your excel spreadsheet format or you're gonna have a bad time.
+
+* There is at least one valid sheet in your workbook that follows the 10 commandments
+* Every valid sheet has data organized as rows of which contain the following columns and types:
+  * a column for the analyte name (string)
+  * a column for the units of the measurements (string)
+  * a series of contiguous measurement values (float)
+* Every valid sheet has one row to indicate the measurement dates
+* Every analyte row measurement value must have an accompanying measurement date value
+* Analytes must be sorted so as to be consistent across all valid sheets e.g. "Bacon" is the same row in all valid sheets
+* Date values must either be a test string in the format of "mM/dD/YYYY" or something that python autoconverts to a `datetime.datetime` object (don't ask me :shrug:)
+
+## I get a cryptic python error message, what gives?
+
+This most likely means your data is malformed or your settings in the script are incorrect.  First check that user parameters are set correctly in the script.  Next check that none of your date values are broken (that should cause an unambiguous error normally).
 
 # TODO
 
