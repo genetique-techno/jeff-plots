@@ -26,8 +26,9 @@ date_validity_check_regex = "^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$"
 analyte_column = 1
 units_column = 4
 min_row = 4
-max_row = 10
+max_row = 4
 min_column = 5
+max_column = None
 exclude_sheets = ["CL-1", "CL-2", "CL-3", "CL-4", "CL-5", "Sheet3", "Sheet4"]
 
 #
@@ -78,10 +79,6 @@ def get_values_from_cells(cells):
   """Takes a list of cells and returns the values of the cells."""
   return [ c.value for c in cells ]
 
-def get_max_column(cells):
-  """Takes a list of cells and returns the column number of the last element in the list."""
-  return cells[-1].column
-
 def merge_dict(dict1, dict2):
   """Merge dictionaries that contain arrays values and concat the arrays of keys found in both."""
   result = {**dict1, **dict2}
@@ -104,23 +101,38 @@ def convert_to_datetime(dateStr):
 
     return datetime.datetime(year, month, day, 0, 0).isoformat()
 
-def column_search_for_none(cells):
-  """Takes a list of cells and a return_prop name. Searches for the first `None` value in the cells and returns the cell[return_prop]. You can extract the length of the valid rows or columns this way."""
-  for i in range(len(cells)):
-    if cells[i].value == None:
-      last_valid_cell = cells[i-1]
-      return last_valid_cell.column
-  return 100000
+def get_max_column(sheet):
+  """Takes a sheet. Takes the sample date row and searches for the first `None` value in the cells and returns the cell.column."""
+  global min_column
+  global max_column
+  global sample_date_row
+  if max_column == None:
+    for cell_column in sheet.iter_cols(min_col = min_column, max_col = 10000):
+      if max_column == None:
+        if cell_column[sample_date_row].value == None:
+          max_column = cell_column[sample_date_row].column - 1
+
+  for cell_row in sheet.iter_rows(min_row = sample_date_row, max_row = sample_date_row):
+    cells = cell_row
+  if max_column == None:
+    for i in range(len(cells)):
+      print(i)
+      if cells[i].value == None:
+        last_valid_cell = cells[i-1]
+        return last_valid_cell.column
+    return 10000
+  else:
+    return max_column
 
 #
 # --- Data Extraction Methods ---
 #
 def get_date_cells(sheet, sample_date_row):
   """Takes the worksheet, uses sample_date_row & min_column to return just the date values."""
+  global max_column
   for a_row in sheet.iter_rows(min_row = sample_date_row, max_row = sample_date_row):
     row = a_row
   cells = [ c for c in row if c.column >= min_column ]
-  max_column = column_search_for_none(cells)
   cells = [ c for c in cells if c.column <= max_column ]
   return cells
 
@@ -137,8 +149,8 @@ def get_analyte_cells(row, min_column, max_column):
 #
 def process_sheet(sheet):
   """Given a Sheet instance, returns a dict of all analytes with data_frame dicts for each."""
+  get_max_column(sheet)
   date_cells = get_date_cells(sheet, sample_date_row)
-  max_column = get_max_column(date_cells)
   date_values = get_values_from_cells(date_cells)
   for i in range(len(date_values)):
     date_values[i] = convert_to_datetime(date_values[i])
