@@ -32,7 +32,6 @@ Follow these 10 commandments in your excel spreadsheet format or you're gonna ha
 
 This most likely means your data is malformed or your settings in the script are incorrect.  First check that user parameters are set correctly in the script.  Next check that none of your date values are broken (that should cause an unambiguous error normally).
 
-# TODO
+#### invalid value encountered in double_scalars
 
-- [ ] `trendline: "ols"`. This is cursed because of an unknown assumption about the datastructure going into `px.scatter`
-- [ ] Formatting/Styling enhancements
+You can get this error message if the OLS computation results in a flat line with R^2 = NaN.  I don't know how statistics works but those plots are basically all NS or non-detect samples.  They are probably invalid datasets.
