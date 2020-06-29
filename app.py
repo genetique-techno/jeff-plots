@@ -204,10 +204,18 @@ def make_plot(analyte, data):
   ols_data = { "x": filtered_dates, "y": model.fittedvalues }
 
   plot = px.scatter(data_frame = data, x = x_label, y = "y_values", labels = { "y_values": data["y_label"] }, color = series_label, title = analyte, width = width, height = height)
+
+  # Allow data points to sit on top of `y:0` without being clipped
+  plot.update_traces(cliponaxis = False)
   # Lock the y-axis to positive values
   plot.update_yaxes(rangemode="nonnegative")
+  plot.update_xaxes(showgrid=True, gridwidth=1, gridcolor="LightGrey")
+  plot.update_yaxes(showgrid=True, gridwidth=1, gridcolor="LightGrey")
+  # Make `y:0` a little more prominent
+  # plot.update_xaxes(showline=True, linewidth=1, linecolor="LightGrey")
   # Add a trace with the computed OLS using its "clean" dataset
   # plot.add_trace(go.Scatter(x = ols_data["x"], y = ols_data["y"], mode = "lines", name = "OLS R^2="+"%.3f"%(model.rsquared)))
+
   bytes = plot.to_image(format = "png")
   filename = analyte + ".png"
   outfile = open(Path("output/") / filename, "wb")
