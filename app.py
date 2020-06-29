@@ -205,7 +205,7 @@ def make_plot(analyte, data):
 
   plot = px.scatter(data_frame = data, x = x_label, y = "y_values", labels = { "y_values": data["y_label"] }, color = series_label, title = analyte, width = width, height = height)
   # Add a trace with the computed OLS using its "clean" dataset
-  plot.add_trace(go.Scatter(x = ols_data["x"], y = ols_data["y"], mode = "lines", name = "OLS R^2="+"%.3f"%(model.rsquared)))
+  # plot.add_trace(go.Scatter(x = ols_data["x"], y = ols_data["y"], mode = "lines", name = "OLS R^2="+"%.3f"%(model.rsquared)))
   bytes = plot.to_image(format = "png")
   filename = analyte + ".png"
   outfile = open(Path("output/") / filename, "wb")
