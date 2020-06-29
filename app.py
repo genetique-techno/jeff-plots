@@ -204,6 +204,8 @@ def make_plot(analyte, data):
   ols_data = { "x": filtered_dates, "y": model.fittedvalues }
 
   plot = px.scatter(data_frame = data, x = x_label, y = "y_values", labels = { "y_values": data["y_label"] }, color = series_label, title = analyte, width = width, height = height)
+  # Lock the y-axis to positive values
+  plot.update_yaxes(rangemode="nonnegative")
   # Add a trace with the computed OLS using its "clean" dataset
   # plot.add_trace(go.Scatter(x = ols_data["x"], y = ols_data["y"], mode = "lines", name = "OLS R^2="+"%.3f"%(model.rsquared)))
   bytes = plot.to_image(format = "png")
