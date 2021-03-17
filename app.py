@@ -216,11 +216,9 @@ def make_plot(analyte, data):
   # Add a trace with the computed OLS using its "clean" dataset
   # plot.add_trace(go.Scatter(x = ols_data["x"], y = ols_data["y"], mode = "lines", name = "OLS R^2="+"%.3f"%(model.rsquared)))
 
-  bytes = plot.to_image(format = "png")
   filename = analyte + ".png"
-  outfile = open(Path("output/") / filename, "wb")
-  outfile.write(bytes)
-  outfile.close()
+  path = "output/" + filename
+  plot.write_image(path, engine="kaleido")
   print(filename)
   return None
 
